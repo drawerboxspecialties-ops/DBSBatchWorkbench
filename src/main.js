@@ -66,8 +66,14 @@ function ensureTopEdgeMounted() {
 
 function ensureOpticutWired() {
   if (opticutWired) return;
-  initOpticutApp();
-  opticutWired = true;
+  try {
+    initOpticutApp();
+  } catch (err) {
+    console.error('Failed to initialize OptiCut tool', err);
+  } finally {
+    // Avoid retry loops that re-attach partial listeners.
+    opticutWired = true;
+  }
 }
 
 function setSlotStatus(slot, { loaded, fileName }) {

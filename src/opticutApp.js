@@ -1116,6 +1116,10 @@ function wireSidebarDetailsScroll() {
 function wireEvents() {
   const dropZone = $('drop-zone');
   const fileInput = $('file-input');
+  if (!dropZone || !fileInput) {
+    console.error('OptiCut import controls missing from DOM (#drop-zone / #file-input).');
+    return;
+  }
 
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -1133,13 +1137,13 @@ function wireEvents() {
     if (e.target.files.length > 0) processFile(e.target.files[0]);
   });
 
-  $('btn-reset').addEventListener('click', () => {
+  $('btn-reset')?.addEventListener('click', () => {
     void hardResetApp();
   });
-  $('btn-download-all').addEventListener('click', downloadAllZip);
-  $('btn-export-current').addEventListener('click', downloadCurrentFile);
-  $('btn-print-cutlist').addEventListener('click', triggerPrintCutList);
-  $('btn-print-all-cutlists').addEventListener('click', printAllCutLists);
+  $('btn-download-all')?.addEventListener('click', downloadAllZip);
+  $('btn-export-current')?.addEventListener('click', downloadCurrentFile);
+  $('btn-print-cutlist')?.addEventListener('click', triggerPrintCutList);
+  $('btn-print-all-cutlists')?.addEventListener('click', printAllCutLists);
   $('btn-print-batch-index')?.addEventListener('click', printBatchOrdersIndex);
   $('btn-send-station')?.addEventListener('click', () => {
     void sendActiveBatchToStation();
@@ -1149,18 +1153,20 @@ function wireEvents() {
   });
   $('tab-preview-print')?.addEventListener('click', () => setPreviewTab('print'));
   $('tab-preview-import')?.addEventListener('click', () => setPreviewTab('import'));
-  $('btn-share').addEventListener('click', shareApplication);
-  $('demo-link').addEventListener('click', loadDemoData);
-  $('btn-apply-max-orders').addEventListener('click', updateMaxOrdersSplit);
-  $('max-orders-input').value = String(state.maxOrdersPerBatch);
-  $('max-orders-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      updateMaxOrdersSplit();
-    }
-  });
-  $('batch-search-input').addEventListener('input', filterBatches);
-  $('batch-search-input').addEventListener('keydown', (e) => {
+  $('btn-share')?.addEventListener('click', shareApplication);
+  $('demo-link')?.addEventListener('click', loadDemoData);
+  $('btn-apply-max-orders')?.addEventListener('click', updateMaxOrdersSplit);
+  if ($('max-orders-input')) {
+    $('max-orders-input').value = String(state.maxOrdersPerBatch);
+    $('max-orders-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        updateMaxOrdersSplit();
+      }
+    });
+  }
+  $('batch-search-input')?.addEventListener('input', filterBatches);
+  $('batch-search-input')?.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       e.target.value = '';
       filterBatches();
@@ -1168,31 +1174,31 @@ function wireEvents() {
     }
   });
 
-  $('btn-exclude-order').addEventListener('click', excludeOrder);
-  $('btn-restore-order').addEventListener('click', restoreOrders);
-  $('btn-exclude-material').addEventListener('click', excludeMaterial);
-  $('btn-restore-material').addEventListener('click', restoreMaterials);
-  $('btn-exclude-top-edge').addEventListener('click', excludeTopEdge);
-  $('btn-restore-top-edge').addEventListener('click', restoreTopEdges);
-  $('btn-restore-all-exclusions').addEventListener('click', (e) => {
+  $('btn-exclude-order')?.addEventListener('click', excludeOrder);
+  $('btn-restore-order')?.addEventListener('click', restoreOrders);
+  $('btn-exclude-material')?.addEventListener('click', excludeMaterial);
+  $('btn-restore-material')?.addEventListener('click', restoreMaterials);
+  $('btn-exclude-top-edge')?.addEventListener('click', excludeTopEdge);
+  $('btn-restore-top-edge')?.addEventListener('click', restoreTopEdges);
+  $('btn-restore-all-exclusions')?.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     restoreAllExclusions();
   });
 
-  $('chk-round-export-widths').addEventListener('change', (e) =>
+  $('chk-round-export-widths')?.addEventListener('change', (e) =>
     handleRoundExportWidthToggle(e.target)
   );
 
-  $('chk-separate-special-orders').addEventListener('change', () => {
+  $('chk-separate-special-orders')?.addEventListener('change', () => {
     if (state.colIndices) rebuild();
   });
 
-  $('chk-combine-ship-dates').addEventListener('change', () => {
+  $('chk-combine-ship-dates')?.addEventListener('change', () => {
     if (state.colIndices) rebuild();
   });
 
-  $('error-toggle').addEventListener('click', toggleErrorDetails);
+  $('error-toggle')?.addEventListener('click', toggleErrorDetails);
   wireSidebarDetailsScroll();
 }
 
