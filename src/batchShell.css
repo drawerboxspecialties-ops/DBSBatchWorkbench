@@ -371,6 +371,136 @@ body.view-batch {
   color: var(--batch-accent);
 }
 
+.batch-validation {
+  margin-top: 1.5rem;
+  background: #fff;
+  border: 1px solid #dbe3ee;
+  border-radius: 16px;
+  padding: 1rem 1.15rem 1.1rem;
+  box-shadow: var(--batch-shadow);
+  text-align: left;
+}
+
+.batch-validation.is-ok {
+  border-color: rgba(15, 118, 110, 0.35);
+}
+
+.batch-validation.is-error {
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.batch-validation.is-warning {
+  border-color: rgba(217, 119, 6, 0.4);
+}
+
+.batch-validation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.batch-validation-head h3 {
+  font-family: var(--font-display, 'Instrument Sans', sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--batch-ink);
+}
+
+.batch-validation-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.batch-validation-badge.is-ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.batch-validation-badge.is-error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.batch-validation-badge.is-warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.batch-validation-badge.is-info {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.batch-validation-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.88rem;
+  color: #475569;
+}
+
+@media (min-width: 720px) {
+  .batch-validation-totals {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.batch-validation-totals strong {
+  display: block;
+  color: var(--batch-ink);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.batch-validation-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+}
+
+.batch-validation-list li {
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.batch-validation-list li[data-severity='error'] {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.batch-validation-list li[data-severity='warning'] {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.batch-validation-list li[data-severity='info'] {
+  background: #eff6ff;
+  color: #1e3a8a;
+  border: 1px solid #bfdbfe;
+}
+
+.batch-validation-list li[data-severity='success'] {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
 .batch-sample-row {
   margin-top: 1.75rem;
   display: flex;

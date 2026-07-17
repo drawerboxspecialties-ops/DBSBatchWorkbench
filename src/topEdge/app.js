@@ -6,6 +6,7 @@ import { getActiveItems } from './logic/filters.js';
 import { getCutOptimizationGroups, getOptimizedSheetTotal } from './logic/calculatorLogic.js';
 import { buildCategoryTablesHtml, formatTimestamp } from './ui/renderReport.js';
 import { syncReportToSaw } from './ui/sawSync.js';
+import { summarizeTopEdgeItems } from '../batch/compareBatchImports.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -436,6 +437,9 @@ export function mountTopEdgeApp(rootEl) {
     }
 
     reportCard.style.display = 'block';
+    window.dispatchEvent(
+      new CustomEvent('dbs-batch-data-changed', { detail: { source: 'top-edge-report' } })
+    );
   }
 
   // ---- Saw sync helpers ---------------------------------------------------
@@ -524,51 +528,75 @@ export function mountTopEdgeApp(rootEl) {
 
   // ---- CSV import ---------------------------------------------------------
   function processCsvFile(file, fileInput = null) {
-    if (!file) return;
+    if (!file) return Promise.resolve(null);
     if (!file.name.toLowerCase().endsWith('.csv')) {
       setStatus('Please upload a CSV file.', true);
-      return;
+      return Promise.resolve(null);
     }
 
     setStatus(`Importing ${file.name}...`);
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const contents = evt.target.result;
-      const parsed   = parseTopEdgeCSV(contents);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const contents = evt.target.result;
+          const parsed = parseTopEdgeCSV(contents);
 
-      if (parsed.items.length > 0) {
-        items = items.concat(parsed.items);
+          if (parsed.items.length > 0) {
+            items = items.concat(parsed.items);
 
-        if (parsed.orderIds.length > 0) {
-          addActiveOrders(parsed.orderIds);
-          syncOrderNotes();
-          renderOrderManager();
+            if (parsed.orderIds.length > 0) {
+              addActiveOrders(parsed.orderIds);
+              syncOrderNotes();
+              renderOrderManager();
+            }
+
+            renderFilterPanel();
+            calculateReport();
+
+            const materialCount = parsed.materials
+              ? parsed.materials.length
+              : new Set(parsed.items.map((item) => item.material)).size;
+            const skippedText =
+              parsed.skippedRows > 0
+                ? ` Skipped ${parsed.skippedRows} row${parsed.skippedRows === 1 ? '' : 's'} missing usable dimensions or LF/Rips.`
+                : '';
+            setStatus(
+              `Imported ${parsed.items.length} row${parsed.items.length === 1 ? '' : 's'} across ${materialCount} material${materialCount === 1 ? '' : 's'} from ${file.name}.${skippedText}`,
+              parsed.skippedRows > 0
+            );
+          } else {
+            const skippedText = parsed.skippedRows
+              ? ` ${parsed.skippedRows} row${parsed.skippedRows === 1 ? '' : 's'} were present but missing usable dimensions or LF/Rips.`
+              : '';
+            setStatus(`Could not extract any valid items from the selected CSV.${skippedText}`, true);
+          }
+          window.dispatchEvent(
+            new CustomEvent('dbs-batch-data-changed', { detail: { source: 'top-edge' } })
+          );
+          resolve(getPublicSummary());
+        } catch (err) {
+          reject(err);
         }
+      };
+      reader.onerror = () => {
+        setStatus(`Could not read ${file.name}. Please try the file again.`, true);
+        reject(new Error(`Could not read ${file.name}`));
+      };
+      reader.readAsText(file);
+      if (fileInput) fileInput.value = '';
+    });
+  }
 
-        renderFilterPanel();
-        calculateReport();
-
-        const materialCount = parsed.materials ? parsed.materials.length
-          : new Set(parsed.items.map(item => item.material)).size;
-        const skippedText = parsed.skippedRows > 0
-          ? ` Skipped ${parsed.skippedRows} row${parsed.skippedRows === 1 ? '' : 's'} missing usable dimensions or LF/Rips.`
-          : '';
-        setStatus(
-          `Imported ${parsed.items.length} row${parsed.items.length === 1 ? '' : 's'} across ${materialCount} material${materialCount === 1 ? '' : 's'} from ${file.name}.${skippedText}`,
-          parsed.skippedRows > 0
-        );
-      } else {
-        const skippedText = parsed.skippedRows
-          ? ` ${parsed.skippedRows} row${parsed.skippedRows === 1 ? '' : 's'} were present but missing usable dimensions or LF/Rips.`
-          : '';
-        setStatus(`Could not extract any valid items from the selected CSV.${skippedText}`, true);
-      }
-    };
-    reader.onerror = () => {
-      setStatus(`Could not read ${file.name}. Please try the file again.`, true);
-    };
-    reader.readAsText(file);
-    if (fileInput) fileInput.value = '';
+  function getPublicSummary() {
+    const active = getActiveItems(items, {
+      activeOrderIds,
+      removedOrderIds,
+      removedMaterials,
+      removedTopEdges,
+    });
+    const report = active.length ? buildReportData(active) : { groups: [] };
+    return summarizeTopEdgeItems(active, report.groups);
   }
 
   function setupDropZone() {
@@ -656,7 +684,7 @@ export function mountTopEdgeApp(rootEl) {
     /** Load a CSV. Pass `{ replace: true }` from the batch home so files do not append. */
     loadFile(file, options = {}) {
       if (options.replace) resetData();
-      processCsvFile(file);
+      return processCsvFile(file);
     },
     getStatus() {
       return {
@@ -665,6 +693,10 @@ export function mountTopEdgeApp(rootEl) {
         orderCount: activeOrderIds.length,
         fileLoaded: items.length > 0,
       };
+    },
+    /** Snapshot for batch cross-validation against the OptiCut CSV. */
+    getSummary() {
+      return getPublicSummary();
     },
     unmount() {
       window.removeEventListener('afterprint', afterPrintHandler);

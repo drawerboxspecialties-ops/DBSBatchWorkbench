@@ -6,7 +6,9 @@ import {
   loadOpticutFile,
   mountStation,
   isStationHash,
+  getOpticutBatchSummary,
 } from './opticutApp.js';
+import { compareBatchImports } from './batch/compareBatchImports.js';
 
 const STORAGE_KEY = 'dbs-batch-workbench-v1';
 
@@ -24,6 +26,14 @@ let opticutWired = false;
 
 function $(id) {
   return document.getElementById(id);
+}
+
+function escapeHTML(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function loadPersistedBatch() {
@@ -71,7 +81,6 @@ function ensureOpticutWired() {
   } catch (err) {
     console.error('Failed to initialize OptiCut tool', err);
   } finally {
-    // Avoid retry loops that re-attach partial listeners.
     opticutWired = true;
   }
 }
@@ -93,6 +102,117 @@ function setSlotStatus(slot, { loaded, fileName }) {
     if (icon) icon.textContent = loaded ? '●' : '○';
   }
   if (slotEl) slotEl.classList.toggle('is-ready', loaded);
+}
+
+function collectSummaries() {
+  const api = ensureTopEdgeMounted();
+  const topEdge = batchState.topEdgeLoaded
+    ? {
+        ...(api?.getSummary?.() || { loaded: false, orders: [], totalParts: 0, totalBoxes: 0, byOrder: {} }),
+        loaded: !!(api?.getSummary?.()?.loaded || batchState.topEdgeLoaded),
+        fileName: batchState.topEdgeFileName,
+      }
+    : { loaded: false, orders: [], totalParts: 0, totalBoxes: 0, byOrder: {} };
+
+  // If Top Edge was marked loaded but summary is empty, keep loaded flag false for compare messaging.
+  if (batchState.topEdgeLoaded && topEdge.orders?.length) {
+    topEdge.loaded = true;
+  }
+
+  const opticut = batchState.opticutLoaded
+    ? {
+        ...getOpticutBatchSummary(),
+        fileName: batchState.opticutFileName,
+      }
+    : { loaded: false, orders: [], totalParts: 0, totalBoxes: 0, byOrder: {} };
+
+  if (batchState.opticutLoaded && opticut.orders?.length) {
+    opticut.loaded = true;
+  }
+
+  return { opticut, topEdge };
+}
+
+function renderBatchValidation(result) {
+  const panel = $('batch-validation');
+  const title = $('batch-validation-title');
+  const badge = $('batch-validation-badge');
+  const totalsEl = $('batch-validation-totals');
+  const list = $('batch-validation-list');
+  if (!panel || !badge || !totalsEl || !list) return;
+
+  const show = batchState.topEdgeLoaded || batchState.opticutLoaded;
+  panel.hidden = !show;
+  if (!show) return;
+
+  panel.classList.remove('is-ok', 'is-error', 'is-warning');
+  badge.classList.remove('is-ok', 'is-error', 'is-warning', 'is-info');
+
+  let tone = 'info';
+  let badgeText = 'Waiting';
+  if (result.ready && result.ok && result.errorCount === 0 && result.warningCount === 0) {
+    tone = 'ok';
+    badgeText = 'Match OK';
+  } else if (result.errorCount > 0) {
+    tone = 'error';
+    badgeText = `${result.errorCount} error${result.errorCount === 1 ? '' : 's'}`;
+  } else if (result.warningCount > 0) {
+    tone = 'warning';
+    badgeText = `${result.warningCount} warning${result.warningCount === 1 ? '' : 's'}`;
+  } else if (result.ready) {
+    tone = 'ok';
+    badgeText = 'Match OK';
+  }
+
+  if (tone === 'ok') {
+    panel.classList.add('is-ok');
+    badge.classList.add('is-ok');
+  } else if (tone === 'error') {
+    panel.classList.add('is-error');
+    badge.classList.add('is-error');
+  } else if (tone === 'warning') {
+    panel.classList.add('is-warning');
+    badge.classList.add('is-warning');
+  } else {
+    badge.classList.add('is-info');
+  }
+
+  badge.textContent = badgeText;
+  if (title) title.textContent = 'Batch match check';
+
+  const t = result.totals || {};
+  totalsEl.innerHTML = `
+    <div><span>Shared orders</span><strong>${t.orderCountShared ?? 0}</strong></div>
+    <div><span>OptiCut / Top Edge orders</span><strong>${t.orderCountOpticut ?? 0} / ${t.orderCountTopEdge ?? 0}</strong></div>
+    <div><span>Parts (OC / TE)</span><strong>${(t.opticutParts ?? 0).toLocaleString()} / ${(t.topEdgeParts ?? 0).toLocaleString()}</strong></div>
+    <div><span>Boxes (OC / TE)</span><strong>${(t.opticutBoxes ?? 0).toLocaleString()} / ${(t.topEdgeBoxes ?? 0).toLocaleString()}</strong></div>
+  `;
+
+  list.innerHTML = (result.issues || [])
+    .map(
+      (issue) =>
+        `<li data-severity="${escapeHTML(issue.severity)}">${escapeHTML(issue.message)}</li>`
+    )
+    .join('');
+}
+
+function runBatchValidation() {
+  // Sync loaded flags from live tool state when possible.
+  const api = ensureTopEdgeMounted();
+  const teSummary = api?.getSummary?.();
+  if (teSummary?.loaded) {
+    batchState.topEdgeLoaded = true;
+  }
+  const ocSummary = getOpticutBatchSummary();
+  if (ocSummary?.loaded) {
+    batchState.opticutLoaded = true;
+  }
+
+  const { opticut, topEdge } = collectSummaries();
+  const result = compareBatchImports(opticut, topEdge);
+  renderBatchValidation(result);
+  refreshBatchUi();
+  return result;
 }
 
 function refreshBatchUi() {
@@ -163,6 +283,7 @@ function showView(view) {
 
   if (view === 'top-edge') ensureTopEdgeMounted();
   if (view === 'opticut') ensureOpticutWired();
+  if (view === 'batch') runBatchValidation();
 }
 
 function wireBatchDrop(slot, { onFile }) {
@@ -211,24 +332,24 @@ function wireShell() {
   });
 
   wireBatchDrop('top-edge', {
-    onFile: (file) => {
+    onFile: async (file) => {
       const api = ensureTopEdgeMounted();
-      api?.loadFile(file, { replace: true });
+      await api?.loadFile(file, { replace: true });
       batchState.topEdgeFileName = file.name;
       batchState.topEdgeLoaded = true;
-      refreshBatchUi();
-      location.hash = '#top-edge';
+      runBatchValidation();
+      location.hash = '#batch';
     },
   });
 
   wireBatchDrop('opticut', {
-    onFile: (file) => {
+    onFile: async (file) => {
       ensureOpticutWired();
-      loadOpticutFile(file);
+      await loadOpticutFile(file);
       batchState.opticutFileName = file.name;
       batchState.opticutLoaded = true;
-      refreshBatchUi();
-      location.hash = '#opticut';
+      runBatchValidation();
+      location.hash = '#batch';
     },
   });
 
@@ -251,12 +372,12 @@ function wireShell() {
       const ocFile = new File([ocText], 'OPTICUT.csv', { type: 'text/csv' });
 
       const api = ensureTopEdgeMounted();
-      api?.loadFile(teFile, { replace: true });
+      await api?.loadFile(teFile, { replace: true });
       batchState.topEdgeFileName = teFile.name;
       batchState.topEdgeLoaded = true;
 
       ensureOpticutWired();
-      loadOpticutFile(ocFile);
+      await loadOpticutFile(ocFile);
       batchState.opticutFileName = ocFile.name;
       batchState.opticutLoaded = true;
 
@@ -264,7 +385,7 @@ function wireShell() {
         batchState.name = 'Sample batch';
         if ($('batch-name-input')) $('batch-name-input').value = batchState.name;
       }
-      refreshBatchUi();
+      runBatchValidation();
       location.hash = '#batch';
     } catch (err) {
       console.error(err);
@@ -278,12 +399,16 @@ function wireShell() {
   });
 
   window.addEventListener('hashchange', routeFromHash);
+  window.addEventListener('dbs-batch-data-changed', () => {
+    runBatchValidation();
+  });
+
   refreshBatchUi();
   routeFromHash();
 
-  // Prefetch mounts so batch-home drops are instant after first paint
   ensureTopEdgeMounted();
   ensureOpticutWired();
+  runBatchValidation();
 }
 
 document.addEventListener('DOMContentLoaded', wireShell);

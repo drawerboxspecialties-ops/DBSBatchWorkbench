@@ -23,6 +23,7 @@ import { DEMO_CSV } from './logic/demoData.js';
 import { buildCutListPrintCard, buildBatchOrdersIndex } from './ui/cutListPrintView.js';
 import { publishStationJob, purgeExpiredStationJobs, isStationHash } from './logic/stationSync.js';
 import { mountStationView } from './ui/stationView.js';
+import { summarizeOpticutState } from './batch/compareBatchImports.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -117,16 +118,27 @@ function shouldCombineShipDates() {
 }
 
 function processFile(file) {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const fileName = file.name || '';
-    state.currentFileName = fileName;
-    state.appSettings = rememberFile(fileName, state.appSettings);
-    persistSettings();
-    parseAndLoad(e.target.result);
-  };
-  reader.onerror = () => alert('Could not read the selected file.');
-  reader.readAsText(file);
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const fileName = file.name || '';
+        state.currentFileName = fileName;
+        state.appSettings = rememberFile(fileName, state.appSettings);
+        persistSettings();
+        parseAndLoad(e.target.result);
+        window.dispatchEvent(new CustomEvent('dbs-batch-data-changed', { detail: { source: 'opticut' } }));
+        resolve(getOpticutBatchSummary());
+      } catch (err) {
+        reject(err);
+      }
+    };
+    reader.onerror = () => {
+      alert('Could not read the selected file.');
+      reject(new Error('Could not read the selected file.'));
+    };
+    reader.readAsText(file);
+  });
 }
 
 function parseAndLoad(text) {
@@ -1223,8 +1235,21 @@ export function mountStation() {
 
 /** Load an OptiCut/Allmoxy cut-list CSV File into the OptiCut tool. */
 export function loadOpticutFile(file) {
-  if (!file) return;
-  processFile(file);
+  if (!file) return Promise.resolve(null);
+  return processFile(file);
+}
+
+/** Snapshot for batch cross-validation against the Top Edge CSV. */
+export function getOpticutBatchSummary() {
+  const summary = summarizeOpticutState({
+    splitGroups: state.splitGroups,
+    parsedRows: state.parsedRows,
+    colIndices: state.colIndices,
+  });
+  return {
+    ...summary,
+    fileName: state.currentFileName || '',
+  };
 }
 
 /** True when the URL hash is the station route. */
