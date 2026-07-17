@@ -1,0 +1,7 @@
+# Generated / vendor output — do not hand-format
+docs/assets/
+dist/
+coverage/
+node_modules/
+*.min.js
+*.map

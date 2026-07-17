@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DBS Drawers — OptiCut CSV Splitter (Guide)</title>
+    <style>
+      :root {
+        --ink: #0f172a;
+        --muted: #475569;
+        --accent: #0d9488;
+        --accent2: #0369a1;
+        --line: #cbd5e1;
+        --bg: #f8fafc;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.32;
+        font-size: 10pt;
+      }
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+      }
+      .toolbar a,
+      .toolbar button {
+        font: inherit;
+        font-weight: 600;
+        font-size: 0.88rem;
+        padding: 0.45rem 0.9rem;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .toolbar button.primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        border: none;
+      }
+      .page {
+        max-width: 8.5in;
+        margin: 1rem auto 2rem;
+        padding: 0.4in 0.48in;
+        background: #fff;
+        box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+      }
+      header.doc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        border-bottom: 2px solid var(--accent);
+        padding-bottom: 0.3rem;
+        margin-bottom: 0.35rem;
+      }
+      h1 {
+        font-size: 1.28rem;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-top: 0.12rem;
+      }
+      .live-url {
+        font-size: 0.7rem;
+        color: var(--accent2);
+        text-align: right;
+        max-width: 2.3in;
+      }
+      h2 {
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--accent);
+        margin: 0.38rem 0 0.15rem;
+      }
+      p,
+      li {
+        font-size: 0.74rem;
+      }
+      ul {
+        padding-left: 1rem;
+        margin: 0.12rem 0;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+      }
+      .cols-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.45rem;
+      }
+      .box {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 0.32rem 0.4rem;
+        background: #fafbfc;
+      }
+      .box strong {
+        display: block;
+        font-size: 0.7rem;
+        margin-bottom: 0.12rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.68rem;
+        margin-top: 0.12rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--line);
+        padding: 0.12rem 0.28rem;
+        text-align: left;
+      }
+      th {
+        background: #eef2f7;
+      }
+      code,
+      .mono {
+        font-family: Consolas, monospace;
+        font-size: 0.65rem;
+        background: #eef2f7;
+        padding: 0.04rem 0.18rem;
+        border-radius: 3px;
+      }
+      .footer {
+        margin-top: 0.32rem;
+        padding-top: 0.22rem;
+        border-top: 1px solid var(--line);
+        font-size: 0.65rem;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+      }
+      @media print {
+        @page {
+          size: letter portrait;
+          margin: 0.32in;
+        }
+        body {
+          background: #fff;
+        }
+        .toolbar {
+          display: none !important;
+        }
+        .page {
+          margin: 0;
+          padding: 0;
+          box-shadow: none;
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <a href="./index.html">← Back to app</a>
+      <button type="button" class="primary" onclick="window.print()">Print guide</button>
+      <a href="./PRESENTATION.pdf" download>Download PDF</a>
+    </div>
+
+    <article class="page">
+      <header class="doc-header">
+        <div>
+          <h1>DBS Drawers — OptiCut CSV Splitter</h1>
+          <p class="subtitle">One-page guide · Allmoxy CSV → OptiCut cut lists</p>
+        </div>
+        <div class="live-url">drawerboxspecialties-ops.github.io/OpticutExportAppV2/</div>
+      </header>
+
+      <h2>What it does</h2>
+      <p>
+        Runs in your browser — drop an Allmoxy CSV, get material/edge/ship-date batches, printable
+        cut lists, OptiCut-ready exports, and a live <b>Station</b> queue for the floor.
+      </p>
+
+      <div class="cols" style="margin-top: 0.28rem">
+        <div class="box">
+          <strong>Import columns</strong>
+          <p>
+            <b>Exported (9):</b> OrderNumber, MaterialName, PartName, W, Length, Quantity, Label,
+            Width, TopEdge.
+          </p>
+          <p style="margin-top: 0.15rem">
+            <b>Batching only:</b> GroupID, Laser, Scoop, Slope, DrillFront, DividersFB, DividersSS,
+            FileSlots, Ship Date.
+          </p>
+        </div>
+        <div class="box">
+          <strong>Batch rules</strong>
+          <ul>
+            <li>Split by material category + top edge + <b>ship date</b> (optional combine dates)</li>
+            <li>
+              <b>B-edge priority:</b> front inherits matching back’s top edge so foil/raw don’t
+              split
+            </li>
+            <li>
+              <b>Special</b> batches: <span class="mono">SPECIAL_</span> + material + top edge +
+              ship date (never mixed with normal)
+            </li>
+            <li>
+              If <b>any row</b> has Scoop/Slope/Dividers/Drill/FileSlots ≠ None →
+              <b>whole sales order</b> is special
+            </li>
+            <li><b>Not SPECIAL triggers:</b> GroupID, Laser</li>
+            <li>Name: <span class="mono">CAT_EDGE_firstOrder</span> (e.g. PLY_PVC_602480)</li>
+            <li>Each order in exactly one batch; max-orders split available</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="cols-3" style="margin-top: 0.28rem">
+        <div class="box">
+          <strong>Print &amp; index</strong>
+          <ul>
+            <li>
+              Cut list: landscape, 3-col flow; order header
+              <span class="mono">3 boxes (1-2, 2-1)</span>; Grp, W, F/B, L/R, Bx, Pcs
+            </li>
+            <li>Code 128 barcode on cut-list header</li>
+            <li>
+              <b>Batch index:</b> all batches + barcodes; orders show group qty
+              <span class="mono">602480 (1-2, 2-1)</span>
+            </li>
+            <li>★ special; *DFM when front material differs</li>
+          </ul>
+        </div>
+        <div class="box">
+          <strong>Station (#station)</strong>
+          <ul>
+            <li>Header <b>Station</b> link, or open <span class="mono">#station</span></li>
+            <li>Prep: <b>Send to station</b> / <b>Send all</b></li>
+            <li>Scan barcode or tap batch; checkboxes sync live</li>
+            <li><b>Remove</b> = soft hide + <b>Add back</b> (amber row)</li>
+            <li>
+              <b>Wipe database</b> = permanent delete all — password
+              <span class="mono">dbs</span>
+            </li>
+          </ul>
+        </div>
+        <div class="box">
+          <strong>Export &amp; math</strong>
+          <p>
+            Boxes = <span class="mono">ceil(parts÷4)</span> per GroupID, then sum for order/batch.
+          </p>
+          <p style="margin-top: 0.12rem">
+            Export strips batching columns. Round widths ON: merges rows, notes originals in Label.
+          </p>
+          <p style="margin-top: 0.12rem">
+            Sidebar ▸: <span class="mono">#order · bx</span>; − remove / + add back.
+          </p>
+        </div>
+      </div>
+
+      <h2>Categories</h2>
+      <table>
+        <tr>
+          <th>Category</th>
+          <th>Code</th>
+          <th>Examples</th>
+        </tr>
+        <tr>
+          <td>Plywood</td>
+          <td>PLY</td>
+          <td>Baltic birch ply</td>
+        </tr>
+        <tr>
+          <td>FAA</td>
+          <td>FAA</td>
+          <td>FAA materials</td>
+        </tr>
+        <tr>
+          <td>Solid wood</td>
+          <td>SLD</td>
+          <td>Alder, maple, oak</td>
+        </tr>
+        <tr>
+          <td>MDF / PVC / tape</td>
+          <td>MDF</td>
+          <td>MDF, melamine, PVC edges</td>
+        </tr>
+      </table>
+
+      <h2>Operator checklist</h2>
+      <ol style="padding-left: 1.05rem; font-size: 0.74rem">
+        <li>Export CSV from Allmoxy (include Ship Date + extra columns if used).</li>
+        <li>
+          Open app → drag &amp; drop → review batches (SPECIAL badge, ship date in meta).
+        </li>
+        <li>Expand batch ▸ to verify/remove/add orders.</li>
+        <li>
+          Print <b>Cut list(s)</b> + <b>Batch index</b> → <b>Send to station</b> → export CSV/ZIP →
+          OptiCut.
+        </li>
+        <li>
+          Floor: open <b>Station</b>, scan barcode, check lines. Wipe all only with password
+          <span class="mono">dbs</span>.
+        </li>
+      </ol>
+
+      <div class="footer">
+        <span>DBS Drawers — Drawer Box Specialties</span>
+        <span>v2</span>
+      </div>
+    </article>
+  </body>
+</html>

@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DBS Drawers — Batch Workbench</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Sans:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="batch-chrome" class="batch-chrome">
+      <header class="batch-header">
+        <div class="batch-brand">
+          <span class="batch-brand-mark" aria-hidden="true">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="9" fill="currentColor" opacity="0.12" />
+              <path d="M8 11h16M8 16h16M8 21h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </span>
+          <div>
+            <h1 class="batch-title">DBS Drawers</h1>
+            <p class="batch-subtitle">Batch Workbench</p>
+          </div>
+        </div>
+        <nav class="batch-nav" aria-label="Primary">
+          <a href="#batch" data-route="batch" class="batch-nav-link is-active">Batch</a>
+          <a href="#top-edge" data-route="top-edge" class="batch-nav-link">Top Edge</a>
+          <a href="#opticut" data-route="opticut" class="batch-nav-link">OptiCut</a>
+          <a href="#station" data-route="station" class="batch-nav-link batch-nav-link--station">
+            <span class="batch-nav-dot" aria-hidden="true"></span>
+            Station
+          </a>
+        </nav>
+        <div class="batch-meta">
+          <label class="batch-label-field">
+            <span>Batch</span>
+            <input id="batch-name-input" type="text" placeholder="e.g. Thu AM run" autocomplete="off" />
+          </label>
+        </div>
+      </header>
+    </div>
+
+    <main id="view-batch" class="view view-batch" data-view="batch">
+      <section class="batch-hero">
+        <p class="batch-hero-kicker">Same order batch · two companion CSVs</p>
+        <h2 class="batch-hero-title">Load both files for this batch</h2>
+        <p class="batch-hero-copy">
+          Drop the Top Edge production CSV and the OptiCut cut-list CSV for the same orders.
+          Each file stays in its own tool — nothing is mixed.
+        </p>
+      </section>
+
+      <div class="batch-pair">
+        <article class="batch-slot" id="slot-top-edge" data-slot="top-edge">
+          <div class="batch-slot-head">
+            <h3>Top Edge CSV</h3>
+            <span class="batch-slot-status" id="status-top-edge">Waiting</span>
+          </div>
+          <p class="batch-slot-desc">Production report · rips · LF · saw sync</p>
+          <input type="file" id="batch-file-top-edge" accept=".csv" hidden />
+          <button type="button" class="batch-drop" id="batch-drop-top-edge">
+            <strong>Drop Top Edge CSV</strong>
+            <small>or click to browse</small>
+          </button>
+          <p class="batch-slot-file" id="file-name-top-edge"></p>
+          <a class="batch-slot-open" href="#top-edge">Open Top Edge tool →</a>
+        </article>
+
+        <article class="batch-slot" id="slot-opticut" data-slot="opticut">
+          <div class="batch-slot-head">
+            <h3>OptiCut CSV</h3>
+            <span class="batch-slot-status" id="status-opticut">Waiting</span>
+          </div>
+          <p class="batch-slot-desc">Cut lists · ZIP export · print · station</p>
+          <input type="file" id="batch-file-opticut" accept=".csv" hidden />
+          <button type="button" class="batch-drop" id="batch-drop-opticut">
+            <strong>Drop OptiCut CSV</strong>
+            <small>or click to browse</small>
+          </button>
+          <p class="batch-slot-file" id="file-name-opticut"></p>
+          <a class="batch-slot-open" href="#opticut">Open OptiCut tool →</a>
+        </article>
+      </div>
+
+      <div class="batch-checklist" id="batch-checklist">
+        <div class="batch-check" data-check="top-edge">
+          <span class="batch-check-icon" aria-hidden="true">○</span>
+          <span>Top Edge file loaded</span>
+        </div>
+        <div class="batch-check" data-check="opticut">
+          <span class="batch-check-icon" aria-hidden="true">○</span>
+          <span>OptiCut file loaded</span>
+        </div>
+      </div>
+
+      <div class="batch-sample-row">
+        <button type="button" id="btn-load-sample-batch" class="batch-sample-btn">
+          Load sample batch
+        </button>
+        <span class="batch-sample-hint">Uses the paired OPTICUT + Top Edge Report CSVs</span>
+      </div>
+    </main>
+
+    <section id="view-topedge" class="view view-topedge" data-view="top-edge" hidden>
+      <div id="top-edge-root"></div>
+    </section>
+
+    <section id="view-opticut" class="view view-opticut" data-view="opticut" hidden>
+<div class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect width="28" height="28" rx="8" fill="currentColor" opacity="0.12" />
+              <path
+                d="M8 10h12M8 14h12M8 18h8"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </span>
+          <div class="brand-text">
+            <h1 class="brand-title">DBS Drawers</h1>
+            <p class="brand-subtitle">OptiCut CSV Splitter</p>
+          </div>
+        </div>
+        <div class="header-actions"><span class="opticut-tool-badge">OptiCut tool</span></div></header>
+
+      <div class="app-layout container">
+        <aside class="sidebar sidebar--left">
+          <section class="panel panel--import" aria-label="Import CSV">
+            <input type="file" id="file-input" accept=".csv" hidden />
+            <button id="drop-zone" class="drop-zone" type="button">
+              <span class="drop-icon" aria-hidden="true">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </span>
+              <span class="drop-text">
+                <strong>Import Allmoxy CSV</strong>
+                <small>Drop file here or click to browse</small>
+              </span>
+            </button>
+
+            <div id="stats-section" class="stats-bar" hidden>
+              <div class="stat-chip">
+                <span class="stat-val" id="stat-total-rows">0</span>
+                <span class="stat-lbl">Parts</span>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-val" id="stat-orders">0</span>
+                <span class="stat-lbl">Orders</span>
+              </div>
+              <div class="stat-chip stat-chip--accent">
+                <span class="stat-val" id="stat-total-boxes">0</span>
+                <span class="stat-lbl">Boxes</span>
+              </div>
+              <button
+                id="btn-reset"
+                class="btn btn-danger btn--compact stat-clear-btn"
+                type="button"
+                title="Hard reset â€” reload fresh (Ctrl+Shift+R)"
+              >
+                Clear
+              </button>
+            </div>
+
+            <div id="side-error-notification" class="error-notification" hidden>
+              <button
+                id="error-toggle"
+                class="error-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="side-error-details"
+              >
+                <span class="error-label">Missing data warnings</span>
+                <span id="error-toggle-icon" class="error-icon" aria-hidden="true">â–¼</span>
+              </button>
+              <ul id="error-list" class="error-list" hidden></ul>
+            </div>
+
+            <div id="demo-section" class="demo-section">
+              <button id="demo-link" class="demo-link" type="button">Try demo CSV</button>
+            </div>
+          </section>
+
+          <section class="panel panel--controls" id="controls-sidebar-card" hidden>
+            <div class="split-config-block" id="split-batches-config">
+              <h3 class="split-config-heading">Split settings</h3>
+              <label for="max-orders-input" class="field-label">Max orders per batch</label>
+              <div class="split-config-row">
+                <input
+                  type="number"
+                  id="max-orders-input"
+                  class="input input--small"
+                  value="999"
+                  min="1"
+                />
+                <button
+                  id="btn-apply-max-orders"
+                  class="btn btn-secondary btn--compact"
+                  type="button"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <div id="exclude-order-section">
+              <details class="sidebar-details">
+                <summary class="sidebar-details-summary">
+                  Filters
+                  <button
+                    id="btn-restore-all-exclusions"
+                    class="sidebar-inline-btn"
+                    type="button"
+                    hidden
+                    title="Restore all removed items"
+                  >
+                    Restore all
+                  </button>
+                </summary>
+                <div class="sidebar-details-body">
+                  <p class="field-hint">
+                    Select items, then <b>âˆ’</b> remove or <b>+</b> restore. Removed =
+                    <i>(removed)</i>.
+                  </p>
+
+                  <div class="filter-field">
+                    <label class="field-label" for="order-filter-select">Orders</label>
+                    <div class="modern-row modern-row--multi">
+                      <select
+                        id="order-filter-select"
+                        class="modern-input modern-select modern-select--multi"
+                        multiple
+                        size="4"
+                        title="Ctrl+click to select"
+                      ></select>
+                      <div class="filter-action-buttons">
+                        <button
+                          class="mini-restore-btn"
+                          id="btn-restore-order"
+                          type="button"
+                          title="Restore"
+                        >
+                          +
+                        </button>
+                        <button
+                          class="mini-danger-btn"
+                          id="btn-exclude-order"
+                          type="button"
+                          title="Remove"
+                        >
+                          âˆ’
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="filter-field">
+                    <label class="field-label" for="material-filter-select">Materials</label>
+                    <div class="modern-row modern-row--multi">
+                      <select
+                        id="material-filter-select"
+                        class="modern-input modern-select modern-select--multi"
+                        multiple
+                        size="4"
+                        title="Ctrl+click to select"
+                      ></select>
+                      <div class="filter-action-buttons">
+                        <button
+                          class="mini-restore-btn"
+                          id="btn-restore-material"
+                          type="button"
+                          title="Restore"
+                        >
+                          +
+                        </button>
+                        <button
+                          class="mini-danger-btn"
+                          id="btn-exclude-material"
+                          type="button"
+                          title="Remove"
+                        >
+                          âˆ’
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="filter-field">
+                    <label class="field-label" for="top-edge-filter-select">Top edges</label>
+                    <div class="modern-row modern-row--multi">
+                      <select
+                        id="top-edge-filter-select"
+                        class="modern-input modern-select modern-select--multi"
+                        multiple
+                        size="4"
+                        title="Ctrl+click to select"
+                      ></select>
+                      <div class="filter-action-buttons">
+                        <button
+                          class="mini-restore-btn"
+                          id="btn-restore-top-edge"
+                          type="button"
+                          title="Restore"
+                        >
+                          +
+                        </button>
+                        <button
+                          class="mini-danger-btn"
+                          id="btn-exclude-top-edge"
+                          type="button"
+                          title="Remove"
+                        >
+                          âˆ’
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+              <details class="sidebar-details">
+                <summary class="sidebar-details-summary">Options</summary>
+                <div class="sidebar-details-body sidebar-details-body--options">
+                  <label class="checkbox-row checkbox-row--compact">
+                    <input type="checkbox" id="chk-combine-ship-dates" />
+                    <span class="checkbox-text">
+                      <span class="checkbox-title">Combine ship dates</span>
+                      <span class="checkbox-help"
+                        >One batch per material &amp; edge; print shows all dates.</span
+                      >
+                    </span>
+                  </label>
+                  <label class="checkbox-row checkbox-row--compact">
+                    <input type="checkbox" id="chk-separate-special-orders" checked />
+                    <span class="checkbox-text">
+                      <span class="checkbox-title">Separate special orders</span>
+                      <span class="checkbox-help"
+                        >Scoop, slope, dividers, drill, file slots â†’ SPECIAL batches.</span
+                      >
+                    </span>
+                  </label>
+                  <label class="checkbox-row checkbox-row--compact">
+                    <input type="checkbox" id="chk-round-export-widths" checked />
+                    <span class="checkbox-text">
+                      <span class="checkbox-title">Round export widths</span>
+                      <span class="checkbox-help">Whole numbers in CSV; originals in Label.</span>
+                    </span>
+                  </label>
+                </div>
+              </details>
+            </div>
+          </section>
+        </aside>
+
+        <section class="workspace" id="workspace">
+          <div id="workspace-placeholder" class="placeholder">
+            <div class="placeholder-icon" aria-hidden="true">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </div>
+            <h3>Ready when you are</h3>
+            <p>
+              Import an Allmoxy export to split batches, preview cut lists, and download OptiCut CSV
+              files.
+            </p>
+          </div>
+
+          <div id="active-workspace" class="active-workspace" hidden>
+            <div class="workspace-grid">
+              <section class="panel panel--main card card--main">
+                <header class="workspace-header">
+                  <div class="workspace-header-text">
+                    <span class="workspace-eyebrow">Active batch</span>
+                    <h2 id="current-view-title" class="view-title">Current Batch</h2>
+                  </div>
+                  <div class="action-bar">
+                    <div class="action-group">
+                      <span class="action-group-label">All batches</span>
+                      <div class="action-group-buttons">
+                        <button
+                          id="btn-print-batch-index"
+                          class="btn btn-secondary btn--compact"
+                          type="button"
+                          title="Print batch names, orders, and barcodes for station scanning"
+                        >
+                          Batch index
+                        </button>
+                        <button
+                          id="btn-print-all-cutlists"
+                          class="btn btn-secondary btn--compact"
+                          type="button"
+                          title="Print cut list for every batch"
+                        >
+                          Cut lists
+                        </button>
+                        <button
+                          id="btn-send-all-station"
+                          class="btn btn-secondary btn--compact"
+                          type="button"
+                          title="Add every batch to the live station queue"
+                        >
+                          Send all to station
+                        </button>
+                        <button
+                          id="btn-download-all"
+                          class="btn btn-primary btn--compact"
+                          type="button"
+                        >
+                          Export ZIP
+                        </button>
+                      </div>
+                    </div>
+                    <span class="action-divider" aria-hidden="true"></span>
+                    <div class="action-group">
+                      <span class="action-group-label">This batch</span>
+                      <div class="action-group-buttons">
+                        <button
+                          id="btn-print-cutlist"
+                          class="btn btn-secondary btn--compact"
+                          type="button"
+                          title="Flat cut list sorted by order, width, length"
+                        >
+                          Cut list
+                        </button>
+                        <button
+                          id="btn-send-station"
+                          class="btn btn-secondary btn--compact"
+                          type="button"
+                          title="Add this batch to the live station queue (#station)"
+                        >
+                          Send to station
+                        </button>
+                        <button
+                          id="btn-export-current"
+                          class="btn btn-secondary btn--compact"
+                          type="button"
+                        >
+                          CSV
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </header>
+
+                <div class="preview-tabs" role="tablist" aria-label="Batch preview">
+                  <button
+                    type="button"
+                    class="preview-tab active"
+                    id="tab-preview-print"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="preview-print"
+                    data-preview="print"
+                  >
+                    Cut list
+                  </button>
+                  <button
+                    type="button"
+                    class="preview-tab"
+                    id="tab-preview-import"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="preview-import"
+                    data-preview="import"
+                  >
+                    Import rows
+                  </button>
+                </div>
+
+                <div
+                  id="preview-print"
+                  class="preview-panel active"
+                  role="tabpanel"
+                  aria-labelledby="tab-preview-print"
+                >
+                  <div id="cutlist-print-preview" class="cutlist-screen-preview"></div>
+                </div>
+
+                <div
+                  id="preview-import"
+                  class="preview-panel"
+                  role="tabpanel"
+                  aria-labelledby="tab-preview-import"
+                  hidden
+                >
+                  <div class="grid-container grid-container--preview">
+                    <table id="data-table">
+                      <thead id="table-head"></thead>
+                      <tbody id="table-body"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <aside
+          class="sidebar sidebar--right panel panel--rail card card--sidebar"
+          id="batches-sidebar-card"
+          hidden
+        >
+          <div class="sidebar-block sidebar-block--batches">
+            <div class="sidebar-block-header">
+              <h2 class="sidebar-heading">Batches</h2>
+            </div>
+
+            <label for="batch-search-input" class="sr-only">Search by Order #</label>
+            <input
+              type="search"
+              id="batch-search-input"
+              class="input input--search"
+              placeholder="Search order #..."
+              autocomplete="off"
+            />
+
+            <div id="category-tabs" class="category-tabs"></div>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="app-footer">DBS Drawers - High Quality Custom Drawer Boxes</footer>
+    </div>
+    </section>
+
+
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="all-print-container" class="print-only" aria-hidden="true"></div>
+
+    <div id="station-root" class="station-root" hidden></div>
+
+    
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
