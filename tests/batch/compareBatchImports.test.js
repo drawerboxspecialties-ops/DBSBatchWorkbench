@@ -20,8 +20,8 @@ import { buildReportData } from '../../src/topEdge/logic/buildReportData.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 function loadSampleSummaries() {
-  const opticutText = fs.readFileSync(path.join(root, 'samples/OPTICUT.csv'), 'utf8');
-  const topEdgeText = fs.readFileSync(path.join(root, 'samples/Top Edge Report.csv'), 'utf8');
+  const opticutText = fs.readFileSync(path.join(root, 'public/samples/OPTICUT.csv'), 'utf8');
+  const topEdgeText = fs.readFileSync(path.join(root, 'public/samples/Top Edge Report.csv'), 'utf8');
 
   const { headers, rows } = parseCSV(opticutText);
   const colIndices = mapHeaders(headers);

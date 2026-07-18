@@ -6,7 +6,6 @@ const STYLE_ID = 'dbs-print-page-style';
  * static @page in CSS cannot serve both tools in one app.
  *
  * @param {'opticut' | 'top-edge'} mode
- * @returns {() => void} cleanup
  */
 export function setPrintPageStyle(mode) {
   clearPrintPageStyle();
@@ -18,7 +17,6 @@ export function setPrintPageStyle(mode) {
     style.textContent = '@media print { @page { size: letter landscape; margin: 0.12in; } }';
   }
   document.head.appendChild(style);
-  return clearPrintPageStyle;
 }
 
 export function clearPrintPageStyle() {

@@ -57,8 +57,6 @@ function persistBatch() {
       STORAGE_KEY,
       JSON.stringify({
         name: batchState.name,
-        topEdgeFileName: batchState.topEdgeFileName,
-        opticutFileName: batchState.opticutFileName,
       })
     );
   } catch {
@@ -104,30 +102,35 @@ function setSlotStatus(slot, { loaded, fileName }) {
   if (slotEl) slotEl.classList.toggle('is-ready', loaded);
 }
 
+function emptySummary() {
+  return { loaded: false, orders: [], totalParts: 0, totalBoxes: 0, byOrder: {} };
+}
+
+/** Always derive loaded state from live tool summaries — never sticky flags. */
 function collectSummaries() {
   const api = ensureTopEdgeMounted();
-  const topEdge = batchState.topEdgeLoaded
-    ? {
-        ...(api?.getSummary?.() || { loaded: false, orders: [], totalParts: 0, totalBoxes: 0, byOrder: {} }),
-        loaded: !!(api?.getSummary?.()?.loaded || batchState.topEdgeLoaded),
-        fileName: batchState.topEdgeFileName,
-      }
-    : { loaded: false, orders: [], totalParts: 0, totalBoxes: 0, byOrder: {} };
+  const teLive = api?.getSummary?.() || emptySummary();
+  const topEdge = {
+    ...teLive,
+    loaded: !!teLive.loaded,
+    fileName: teLive.loaded ? batchState.topEdgeFileName : '',
+  };
 
-  // If Top Edge was marked loaded but summary is empty, keep loaded flag false for compare messaging.
-  if (batchState.topEdgeLoaded && topEdge.orders?.length) {
-    topEdge.loaded = true;
-  }
+  const ocLive = getOpticutBatchSummary() || emptySummary();
+  const opticut = {
+    ...ocLive,
+    loaded: !!ocLive.loaded,
+    fileName: ocLive.loaded
+      ? batchState.opticutFileName || ocLive.fileName || ''
+      : '',
+  };
 
-  const opticut = batchState.opticutLoaded
-    ? {
-        ...getOpticutBatchSummary(),
-        fileName: batchState.opticutFileName,
-      }
-    : { loaded: false, orders: [], totalParts: 0, totalBoxes: 0, byOrder: {} };
-
-  if (batchState.opticutLoaded && opticut.orders?.length) {
-    opticut.loaded = true;
+  batchState.topEdgeLoaded = topEdge.loaded;
+  batchState.opticutLoaded = opticut.loaded;
+  if (!topEdge.loaded) batchState.topEdgeFileName = '';
+  if (!opticut.loaded) batchState.opticutFileName = '';
+  else if (ocLive.fileName && !batchState.opticutFileName) {
+    batchState.opticutFileName = ocLive.fileName;
   }
 
   return { opticut, topEdge };
@@ -197,17 +200,6 @@ function renderBatchValidation(result) {
 }
 
 function runBatchValidation() {
-  // Sync loaded flags from live tool state when possible.
-  const api = ensureTopEdgeMounted();
-  const teSummary = api?.getSummary?.();
-  if (teSummary?.loaded) {
-    batchState.topEdgeLoaded = true;
-  }
-  const ocSummary = getOpticutBatchSummary();
-  if (ocSummary?.loaded) {
-    batchState.opticutLoaded = true;
-  }
-
   const { opticut, topEdge } = collectSummaries();
   const result = compareBatchImports(opticut, topEdge);
   renderBatchValidation(result);
@@ -333,10 +325,15 @@ function wireShell() {
 
   wireBatchDrop('top-edge', {
     onFile: async (file) => {
-      const api = ensureTopEdgeMounted();
-      await api?.loadFile(file, { replace: true });
-      batchState.topEdgeFileName = file.name;
-      batchState.topEdgeLoaded = true;
+      try {
+        const api = ensureTopEdgeMounted();
+        const summary = await api?.loadFile(file, { replace: true });
+        batchState.topEdgeFileName = summary?.loaded ? file.name : '';
+      } catch (err) {
+        console.error(err);
+        batchState.topEdgeFileName = '';
+        alert('Could not load Top Edge CSV.');
+      }
       runBatchValidation();
       location.hash = '#batch';
     },
@@ -344,10 +341,15 @@ function wireShell() {
 
   wireBatchDrop('opticut', {
     onFile: async (file) => {
-      ensureOpticutWired();
-      await loadOpticutFile(file);
-      batchState.opticutFileName = file.name;
-      batchState.opticutLoaded = true;
+      try {
+        ensureOpticutWired();
+        const summary = await loadOpticutFile(file);
+        batchState.opticutFileName = summary?.loaded ? file.name : '';
+      } catch (err) {
+        console.error(err);
+        batchState.opticutFileName = '';
+        alert('Could not load OptiCut CSV.');
+      }
       runBatchValidation();
       location.hash = '#batch';
     },
@@ -372,14 +374,12 @@ function wireShell() {
       const ocFile = new File([ocText], 'OPTICUT.csv', { type: 'text/csv' });
 
       const api = ensureTopEdgeMounted();
-      await api?.loadFile(teFile, { replace: true });
-      batchState.topEdgeFileName = teFile.name;
-      batchState.topEdgeLoaded = true;
+      const teSummary = await api?.loadFile(teFile, { replace: true });
+      batchState.topEdgeFileName = teSummary?.loaded ? teFile.name : '';
 
       ensureOpticutWired();
-      await loadOpticutFile(ocFile);
-      batchState.opticutFileName = ocFile.name;
-      batchState.opticutLoaded = true;
+      const ocSummary = await loadOpticutFile(ocFile);
+      batchState.opticutFileName = ocSummary?.loaded ? ocFile.name : '';
 
       if (!$('batch-name-input')?.value) {
         batchState.name = 'Sample batch';

@@ -330,6 +330,8 @@ export function mountStationView(root) {
     const bodyClasses = ['print-active', 'print-cutlist-active', 'station-print-active'];
     bodyClasses.forEach((cls) => document.body.classList.add(cls));
     setPrintPageStyle('opticut');
+    const previousTitle = document.title;
+    document.title = ' ';
 
     let cleaned = false;
     const cleanup = () => {
@@ -337,6 +339,7 @@ export function mountStationView(root) {
       cleaned = true;
       bodyClasses.forEach((cls) => document.body.classList.remove(cls));
       printContainer.innerHTML = '';
+      document.title = previousTitle;
       clearPrintPageStyle();
     };
     window.addEventListener('afterprint', cleanup, { once: true });

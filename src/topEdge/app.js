@@ -1,9 +1,9 @@
 import './styles.css';
 import { parseTopEdgeCSV } from './logic/parseTopEdgeCsv.js';
-import { buildReportData, getCategoryDisplayName } from './logic/buildReportData.js';
+import { buildReportData } from './logic/buildReportData.js';
 import { buildExportCsvString } from './logic/exportReportCsv.js';
 import { getActiveItems } from './logic/filters.js';
-import { getCutOptimizationGroups, getOptimizedSheetTotal } from './logic/calculatorLogic.js';
+import { getOptimizedSheetTotal } from './logic/calculatorLogic.js';
 import { buildCategoryTablesHtml, formatTimestamp } from './ui/renderReport.js';
 import { syncReportToSaw } from './ui/sawSync.js';
 import { summarizeTopEdgeItems } from '../batch/compareBatchImports.js';
@@ -417,6 +417,9 @@ export function mountTopEdgeApp(rootEl) {
     if (items.length === 0 || reportItems.length === 0) {
       reportCard.style.display = 'none';
       computedGroups = [];
+      window.dispatchEvent(
+        new CustomEvent('dbs-batch-data-changed', { detail: { source: 'top-edge-report' } })
+      );
       return;
     }
 
@@ -468,27 +471,49 @@ export function mountTopEdgeApp(rootEl) {
   }
 
   // ---- Print ---------------------------------------------------------------
-  function printReport() {
-    // Stamp current timestamps on print headers
+  let printTitleRestore = null;
+  let printCleanupTimer = 0;
+
+  function isTopEdgePrintTarget() {
+    const view = document.getElementById('view-topedge');
+    if (!view || view.hidden) return false;
+    const reportCard = $('te-report-card');
+    return !!(reportCard && reportCard.style.display !== 'none' && computedGroups.length > 0);
+  }
+
+  function beginTopEdgePrint() {
     rootEl.querySelectorAll('.print-timestamp').forEach((el) => {
       el.textContent = formatTimestamp();
     });
-
-    // Match original calculator: blank document title suppresses browser header text.
-    const previousTitle = document.title;
+    if (printTitleRestore == null) printTitleRestore = document.title;
     document.title = ' ';
     document.body.classList.add('printing-top-edge');
     setPrintPageStyle('top-edge');
+    window.clearTimeout(printCleanupTimer);
+    printCleanupTimer = window.setTimeout(endTopEdgePrint, 120_000);
+  }
 
-    const cleanup = () => {
-      document.body.classList.remove('printing-top-edge');
-      document.title = previousTitle;
-      clearPrintPageStyle();
-    };
-    window.addEventListener('afterprint', cleanup, { once: true });
-    setTimeout(cleanup, 120_000);
+  function endTopEdgePrint() {
+    window.clearTimeout(printCleanupTimer);
+    printCleanupTimer = 0;
+    document.body.classList.remove('printing-top-edge');
+    if (printTitleRestore != null) {
+      document.title = printTitleRestore;
+      printTitleRestore = null;
+    }
+    clearPrintPageStyle();
+  }
+
+  function printReport() {
+    if (!isTopEdgePrintTarget()) return;
+    beginTopEdgePrint();
     window.print();
   }
+
+  window.addEventListener('beforeprint', () => {
+    if (isTopEdgePrintTarget()) beginTopEdgePrint();
+  });
+  window.addEventListener('afterprint', endTopEdgePrint);
 
   // ---- CSV Export ----------------------------------------------------------
   function exportCSV() {
@@ -634,18 +659,7 @@ export function mountTopEdgeApp(rootEl) {
   // ---- Clear all -----------------------------------------------------------
   function clearAll() {
     if (!confirm('Are you sure you want to clear all items?')) return;
-    items           = [];
-    computedGroups  = [];
-    activeOrderIds  = [];
-    removedOrderIds = [];
-    removedMaterials = [];
-    removedTopEdges  = [];
-    $('te-order-notes').value = '';
-    $('te-chk-include-removed-export').checked = false;
-    renderOrderManager();
-    renderFilterPanel();
-    setStatus('');
-    calculateReport();
+    resetData();
   }
 
   // ---- Wire events ---------------------------------------------------------

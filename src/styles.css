@@ -794,7 +794,8 @@ body {
   }
 }
 
-.grid-container {
+/* Scoped to OptiCut so Top Edge report tables (.grid-container / .badge) are not affected. */
+#view-opticut .grid-container {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -804,26 +805,26 @@ body {
   min-height: 12rem;
 }
 
-.grid-container--preview {
+#view-opticut .grid-container--preview {
   max-height: none;
   min-height: min(62vh, 640px);
 }
 
 @media (min-width: 960px) {
-  .grid-container--preview {
+  #view-opticut .grid-container--preview {
     min-height: calc(100vh - 16rem);
   }
 }
 
-/* ── Tables ────────────────────────────────────────────── */
-table {
+/* ── Tables (OptiCut workspace only) ───────────────────── */
+#view-opticut table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
   text-align: left;
 }
 
-th {
+#view-opticut th {
   background: var(--surface-muted);
   color: var(--text);
   font-weight: 600;
@@ -836,17 +837,17 @@ th {
   white-space: nowrap;
 }
 
-td {
+#view-opticut td {
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
   color: var(--text);
 }
 
-tbody tr:hover td {
+#view-opticut tbody tr:hover td {
   background: var(--accent-muted);
 }
 
-.badge {
+#view-opticut .badge {
   background: var(--accent-muted);
   color: var(--accent);
   border: 1px solid rgba(37, 99, 235, 0.2);
@@ -858,7 +859,7 @@ tbody tr:hover td {
   white-space: nowrap;
 }
 
-.badge--danger {
+#view-opticut .badge--danger {
   background: var(--danger-muted);
   color: var(--danger);
   border-color: rgba(220, 38, 38, 0.3);
@@ -2086,11 +2087,10 @@ tbody tr:hover td {
 @media print {
   /*
    * @page size is injected at print time (landscape for OptiCut, portrait for Top Edge).
-   * Do not set a global @page here — it fights the Top Edge report layout.
+   * Station print always also sets print-active, so station-print-active alone is not needed here.
    */
 
-  body.print-active,
-  body.station-print-active {
+  body.print-active {
     background: #fff !important;
     color: #000 !important;
     padding: 0 !important;
@@ -2100,15 +2100,14 @@ tbody tr:hover td {
     overflow: visible !important;
   }
 
-  body.print-active .app-shell,
-  body.station-print-active .app-shell {
+  body.print-active .app-shell {
     padding: 0 !important;
     margin: 0 !important;
     max-width: none !important;
     min-height: 0 !important;
   }
 
-  /* Hide OptiCut chrome only while OptiCut/Station is printing */
+  /* Hide chrome while OptiCut/Station is printing */
   body.print-active .app-header,
   body.print-active .app-footer,
   body.print-active .sidebar,
@@ -2129,42 +2128,16 @@ tbody tr:hover td {
   body.print-active #view-topedge,
   body.print-active #view-batch,
   body.print-active .batch-chrome,
-  body.station-print-active .app-header,
-  body.station-print-active .app-footer,
-  body.station-print-active .sidebar,
-  body.station-print-active .workspace,
-  body.station-print-active .workspace-header,
-  body.station-print-active .action-bar,
-  body.station-print-active .app-layout,
-  body.station-print-active .preview-tabs,
-  body.station-print-active .preview-panel,
-  body.station-print-active .cutlist-screen-preview,
-  body.station-print-active .grid-container,
-  body.station-print-active .stats-section,
-  body.station-print-active .stats-bar,
-  body.station-print-active .error-notification,
-  body.station-print-active .demo-section,
-  body.station-print-active .toast-container,
-  body.station-print-active #view-opticut,
-  body.station-print-active #view-topedge,
-  body.station-print-active #view-batch,
-  body.station-print-active .batch-chrome {
+  body.print-active .station-root,
+  body.print-active .container {
     display: none !important;
   }
 
-  body.print-active .print-only,
-  body.station-print-active .print-only {
+  body.print-active .print-only {
     display: block !important;
   }
 
-  body.print-active .container,
-  body.print-active .app-header,
-  body.print-active .app-footer {
-    display: none !important;
-  }
-
-  body.print-active #all-print-container,
-  body.station-print-active #all-print-container {
+  body.print-active #all-print-container {
     display: block !important;
     position: static !important;
     width: 100%;
@@ -2172,7 +2145,7 @@ tbody tr:hover td {
     padding: 0;
   }
 
-  .print-batch-card {
+  body.print-active .print-batch-card {
     margin: 0;
     padding: 0;
     break-inside: auto;
@@ -2196,7 +2169,7 @@ tbody tr:hover td {
     page-break-inside: avoid;
   }
 
-  .print-batch-header {
+  body.print-active .print-batch-header {
     margin-bottom: 0.06in;
     break-after: avoid;
     page-break-after: avoid;
@@ -2204,59 +2177,59 @@ tbody tr:hover td {
     page-break-inside: avoid;
   }
 
-  .print-batch-meta {
+  body.print-active .print-batch-meta {
     padding: 5px 8px;
   }
 
-  .print-meta-chip {
+  body.print-active .print-meta-chip {
     padding: 2px 5px;
   }
 
-  .cutlist-print-flow {
+  body.print-active .cutlist-print-flow {
     width: 100%;
   }
 
-  .print-batch-card .print-batch-header + .cutlist-print-flow {
+  body.print-active .print-batch-card .print-batch-header + .cutlist-print-flow {
     break-before: avoid;
     page-break-before: avoid;
   }
 
-  .cutlist-print-columns {
+  body.print-active .cutlist-print-columns {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: start;
     gap: 0.08in;
   }
 
-  .cutlist-print-columns + .cutlist-print-columns {
+  body.print-active .cutlist-print-columns + .cutlist-print-columns {
     break-before: page;
     page-break-before: always;
   }
 
-  .cutlist-order-column {
+  body.print-active .cutlist-order-column {
     min-width: 0;
   }
 
-  .cutlist-order-fragment {
+  body.print-active .cutlist-order-fragment {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  .cutlist-order-fragment .cutlist-order-title {
+  body.print-active .cutlist-order-fragment .cutlist-order-title {
     break-after: avoid;
     page-break-after: avoid;
   }
 
-  .cutlist-order-title {
+  body.print-active .cutlist-order-title {
     break-after: avoid;
     page-break-after: avoid;
   }
 
-  .cutlist-table thead {
+  body.print-active .cutlist-table thead {
     display: table-header-group;
   }
 
-  .cutlist-table tr {
+  body.print-active .cutlist-table tr {
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -3377,13 +3350,6 @@ body.station-live.print-active .station-root {
   .station-batch-tools {
     width: 100%;
     justify-content: flex-start;
-  }
-}
-
-/* Station print uses #all-print-container (same as prep print). */
-@media print {
-  body.station-print-active .station-root {
-    display: none !important;
   }
 }
 

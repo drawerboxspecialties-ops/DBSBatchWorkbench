@@ -171,20 +171,20 @@ export function compareBatchImports(opticut, topEdge) {
     }
   }
 
-  // Internal sanity: Top Edge report boxes should equal ceil rules on report groups.
-  if (te.reportParts != null && te.reportParts !== te.totalParts) {
+  // Internal sanity: per-order row sums vs printed report group totals.
+  if (te.orderParts != null && te.reportParts != null && te.orderParts !== te.reportParts) {
     issues.push({
       severity: 'warning',
       code: 'TOPEDGE_INTERNAL_PARTS',
-      message: `Top Edge active-row parts (${te.totalParts}) differ from report-group parts (${te.reportParts}). Check removed filters.`,
+      message: `Top Edge per-order parts (${te.orderParts}) differ from report-group parts (${te.reportParts}). Check removed filters.`,
     });
   }
 
-  if (te.reportBoxes != null && te.reportBoxes !== te.totalBoxes) {
+  if (te.orderBoxes != null && te.reportBoxes != null && te.orderBoxes !== te.reportBoxes) {
     issues.push({
       severity: 'warning',
       code: 'TOPEDGE_INTERNAL_BOXES',
-      message: `Top Edge per-order box sum (${te.totalBoxes}) differs from report total boxes (${te.reportBoxes}) — usually because report ceils boxes per height/material group across shared orders.`,
+      message: `Top Edge per-order box sum (${te.orderBoxes}) differs from report total boxes (${te.reportBoxes}) — usually because report ceils boxes per height/material group across shared orders.`,
     });
   }
 
@@ -232,13 +232,15 @@ export function summarizeTopEdgeItems(items, reportGroups = null) {
   const totalParts = orders.reduce((sum, o) => sum + byOrder[o].parts, 0);
   const totalBoxes = orders.reduce((sum, o) => sum + byOrder[o].boxes, 0);
 
-  /** @type {SideSummary & { reportParts?: number, reportBoxes?: number }} */
+  /** @type {SideSummary & { orderParts?: number, orderBoxes?: number, reportParts?: number, reportBoxes?: number }} */
   const summary = {
     loaded: list.length > 0,
     orders,
     totalParts,
     totalBoxes,
     byOrder,
+    orderParts: totalParts,
+    orderBoxes: totalBoxes,
   };
 
   if (Array.isArray(reportGroups)) {
@@ -329,6 +331,8 @@ function normalizeSide(side) {
     totalParts: Number(side.totalParts) || 0,
     totalBoxes: Number(side.totalBoxes) || 0,
     byOrder,
+    orderParts: side.orderParts,
+    orderBoxes: side.orderBoxes,
     reportParts: side.reportParts,
     reportBoxes: side.reportBoxes,
     fileName: side.fileName,

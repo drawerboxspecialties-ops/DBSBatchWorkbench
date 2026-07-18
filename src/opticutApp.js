@@ -128,7 +128,7 @@ function processFile(file) {
         state.appSettings = rememberFile(fileName, state.appSettings);
         persistSettings();
         parseAndLoad(e.target.result);
-        window.dispatchEvent(new CustomEvent('dbs-batch-data-changed', { detail: { source: 'opticut' } }));
+        // rebuild() (via parseAndLoad) dispatches dbs-batch-data-changed
         resolve(getOpticutBatchSummary());
       } catch (err) {
         reject(err);
@@ -219,6 +219,7 @@ function computeSplitGroups(rows) {
 function rebuild() {
   state.splitGroups = computeSplitGroups(state.parsedRows);
   showWorkspace();
+  window.dispatchEvent(new CustomEvent('dbs-batch-data-changed', { detail: { source: 'opticut' } }));
 }
 
 async function hardResetApp() {
@@ -922,6 +923,8 @@ function runPrintJob(buildMarkup, bodyClasses) {
   printContainer.appendChild(buildMarkup());
   bodyClasses.forEach((cls) => document.body.classList.add(cls));
   setPrintPageStyle('opticut');
+  const previousTitle = document.title;
+  document.title = ' ';
 
   let cleaned = false;
   const cleanup = () => {
@@ -929,6 +932,7 @@ function runPrintJob(buildMarkup, bodyClasses) {
     cleaned = true;
     bodyClasses.forEach((cls) => document.body.classList.remove(cls));
     printContainer.innerHTML = '';
+    document.title = previousTitle;
     clearPrintPageStyle();
   };
 
