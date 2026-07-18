@@ -2082,15 +2082,15 @@ tbody tr:hover td {
   font-style: italic;
 }
 
-/* ── Print media ──────────────────────────────────────── */
+/* ── Print media (OptiCut / Station only — scoped so Top Edge print is untouched) ── */
 @media print {
-  @page {
-    size: letter landscape;
-    margin: 0.12in;
-  }
+  /*
+   * @page size is injected at print time (landscape for OptiCut, portrait for Top Edge).
+   * Do not set a global @page here — it fights the Top Edge report layout.
+   */
 
-  html,
-  body {
+  body.print-active,
+  body.station-print-active {
     background: #fff !important;
     color: #000 !important;
     padding: 0 !important;
@@ -2100,33 +2100,60 @@ tbody tr:hover td {
     overflow: visible !important;
   }
 
-  body.print-active .app-shell {
+  body.print-active .app-shell,
+  body.station-print-active .app-shell {
     padding: 0 !important;
     margin: 0 !important;
     max-width: none !important;
     min-height: 0 !important;
   }
 
-  .app-header,
-  .app-footer,
-  .sidebar,
-  .workspace,
-  .workspace-header,
-  .action-bar,
-  .app-layout,
-  .preview-tabs,
-  .preview-panel,
-  .cutlist-screen-preview,
-  .grid-container,
-  .stats-section,
-  .stats-bar,
-  .error-notification,
-  .demo-section,
-  .toast-container {
+  /* Hide OptiCut chrome only while OptiCut/Station is printing */
+  body.print-active .app-header,
+  body.print-active .app-footer,
+  body.print-active .sidebar,
+  body.print-active .workspace,
+  body.print-active .workspace-header,
+  body.print-active .action-bar,
+  body.print-active .app-layout,
+  body.print-active .preview-tabs,
+  body.print-active .preview-panel,
+  body.print-active .cutlist-screen-preview,
+  body.print-active .grid-container,
+  body.print-active .stats-section,
+  body.print-active .stats-bar,
+  body.print-active .error-notification,
+  body.print-active .demo-section,
+  body.print-active .toast-container,
+  body.print-active #view-opticut,
+  body.print-active #view-topedge,
+  body.print-active #view-batch,
+  body.print-active .batch-chrome,
+  body.station-print-active .app-header,
+  body.station-print-active .app-footer,
+  body.station-print-active .sidebar,
+  body.station-print-active .workspace,
+  body.station-print-active .workspace-header,
+  body.station-print-active .action-bar,
+  body.station-print-active .app-layout,
+  body.station-print-active .preview-tabs,
+  body.station-print-active .preview-panel,
+  body.station-print-active .cutlist-screen-preview,
+  body.station-print-active .grid-container,
+  body.station-print-active .stats-section,
+  body.station-print-active .stats-bar,
+  body.station-print-active .error-notification,
+  body.station-print-active .demo-section,
+  body.station-print-active .toast-container,
+  body.station-print-active #view-opticut,
+  body.station-print-active #view-topedge,
+  body.station-print-active #view-batch,
+  body.station-print-active .batch-chrome {
     display: none !important;
   }
 
-  .print-only {
+  body.print-active .print-only,
+  body.station-print-active .print-only {
     display: block !important;
   }
 
@@ -2136,7 +2163,8 @@ tbody tr:hover td {
     display: none !important;
   }
 
-  body.print-active #all-print-container {
+  body.print-active #all-print-container,
+  body.station-print-active #all-print-container {
     display: block !important;
     position: static !important;
     width: 100%;

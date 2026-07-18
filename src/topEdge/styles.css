@@ -562,20 +562,26 @@
     box-sizing: border-box !important;
   }
 
-  @page {
-    size: letter;
-    margin: 0;
+  /* @page injected at print time — portrait letter, margin 0 */
+
+  html:has(body.printing-top-edge),
+  body.printing-top-edge {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   body.printing-top-edge {
-    background-color: #ffffff;
-    color: #000000;
-    width: 100% !important;
-    margin: 0 !important;
     padding: 0.35in 0.55in 0.28in 0.55in !important;
     font-size: 13px !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    font-family: 'Outfit', 'DM Sans', system-ui, sans-serif !important;
   }
 
   /* Hide chrome / other tools; keep nested Top Edge report visible */
@@ -595,6 +601,7 @@
   }
   body.printing-top-edge .top-edge-app .te-card:not(#te-report-card) { display: none !important; }
   body.printing-top-edge .top-edge-app .te-btn { display: none !important; }
+  body.printing-top-edge .top-edge-app .grid-header-actions { display: none !important; }
   body.printing-top-edge .top-edge-app #te-batch-notes-display { display: none !important; }
   body.printing-top-edge .top-edge-app .grid-header-actions h2 { display: none !important; }
 
@@ -632,6 +639,8 @@
   }
 
   body.printing-top-edge .grid-container {
+    display: block !important;
+    visibility: visible !important;
     max-height: none !important;
     overflow: visible !important;
     border: none !important;
@@ -641,6 +650,19 @@
     break-inside: auto;
     width: 100% !important;
     max-width: 100% !important;
+  }
+
+  body.printing-top-edge .report-table,
+  body.printing-top-edge .cut-optimization,
+  body.printing-top-edge .grand-total-box,
+  body.printing-top-edge .print-header,
+  body.printing-top-edge .report-category-header {
+    display: revert !important;
+    visibility: visible !important;
+  }
+
+  body.printing-top-edge .print-header {
+    display: flex !important;
   }
 
   body.printing-top-edge table {

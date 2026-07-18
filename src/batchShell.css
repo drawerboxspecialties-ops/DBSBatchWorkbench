@@ -577,15 +577,17 @@ body.view-station .batch-chrome {
     display: none !important;
   }
 
-  /* Top Edge print: hide OptiCut shell entirely */
+  /* Top Edge print: hide everything except the Top Edge view */
+  body.printing-top-edge .batch-chrome,
   body.printing-top-edge #view-opticut,
+  body.printing-top-edge #view-batch,
   body.printing-top-edge #toast-container,
-  body.printing-top-edge #station-root {
+  body.printing-top-edge #station-root,
+  body.printing-top-edge #all-print-container {
     display: none !important;
   }
 
-  /* OptiCut print: hide Top Edge panel */
-  body:not(.printing-top-edge) #view-topedge {
-    display: none !important;
+  body.printing-top-edge #view-topedge {
+    display: block !important;
   }
 }

@@ -7,6 +7,7 @@ import { getCutOptimizationGroups, getOptimizedSheetTotal } from './logic/calcul
 import { buildCategoryTablesHtml, formatTimestamp } from './ui/renderReport.js';
 import { syncReportToSaw } from './ui/sawSync.js';
 import { summarizeTopEdgeItems } from '../batch/compareBatchImports.js';
+import { setPrintPageStyle, clearPrintPageStyle } from '../printPageStyle.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -469,13 +470,24 @@ export function mountTopEdgeApp(rootEl) {
   // ---- Print ---------------------------------------------------------------
   function printReport() {
     // Stamp current timestamps on print headers
-    rootEl.querySelectorAll('.print-timestamp').forEach(el => {
+    rootEl.querySelectorAll('.print-timestamp').forEach((el) => {
       el.textContent = formatTimestamp();
     });
 
+    // Match original calculator: blank document title suppresses browser header text.
+    const previousTitle = document.title;
+    document.title = ' ';
     document.body.classList.add('printing-top-edge');
+    setPrintPageStyle('top-edge');
+
+    const cleanup = () => {
+      document.body.classList.remove('printing-top-edge');
+      document.title = previousTitle;
+      clearPrintPageStyle();
+    };
+    window.addEventListener('afterprint', cleanup, { once: true });
+    setTimeout(cleanup, 120_000);
     window.print();
-    // afterprint event removes the class
   }
 
   // ---- CSV Export ----------------------------------------------------------
@@ -658,10 +670,6 @@ export function mountTopEdgeApp(rootEl) {
 
   setupDropZone();
 
-  // Handle afterprint: remove class added in printReport
-  const afterPrintHandler = () => document.body.classList.remove('printing-top-edge');
-  window.addEventListener('afterprint', afterPrintHandler);
-
   function resetData() {
     items = [];
     computedGroups = [];
@@ -699,7 +707,8 @@ export function mountTopEdgeApp(rootEl) {
       return getPublicSummary();
     },
     unmount() {
-      window.removeEventListener('afterprint', afterPrintHandler);
+      clearPrintPageStyle();
+      document.body.classList.remove('printing-top-edge');
       rootEl.innerHTML = '';
     },
   };

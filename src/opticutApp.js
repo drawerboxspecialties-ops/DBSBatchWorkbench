@@ -24,6 +24,7 @@ import { buildCutListPrintCard, buildBatchOrdersIndex } from './ui/cutListPrintV
 import { publishStationJob, purgeExpiredStationJobs, isStationHash } from './logic/stationSync.js';
 import { mountStationView } from './ui/stationView.js';
 import { summarizeOpticutState } from './batch/compareBatchImports.js';
+import { setPrintPageStyle, clearPrintPageStyle } from './printPageStyle.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -920,6 +921,7 @@ function runPrintJob(buildMarkup, bodyClasses) {
   printContainer.innerHTML = '';
   printContainer.appendChild(buildMarkup());
   bodyClasses.forEach((cls) => document.body.classList.add(cls));
+  setPrintPageStyle('opticut');
 
   let cleaned = false;
   const cleanup = () => {
@@ -927,6 +929,7 @@ function runPrintJob(buildMarkup, bodyClasses) {
     cleaned = true;
     bodyClasses.forEach((cls) => document.body.classList.remove(cls));
     printContainer.innerHTML = '';
+    clearPrintPageStyle();
   };
 
   window.addEventListener('afterprint', cleanup, { once: true });

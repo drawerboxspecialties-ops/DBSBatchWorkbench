@@ -16,6 +16,7 @@ import {
   wipeAllStationJobs,
   verifyStationWipePassword,
 } from '../logic/stationSync.js';
+import { setPrintPageStyle, clearPrintPageStyle } from '../printPageStyle.js';
 
 const ZOOM_STORAGE_KEY = 'opticut-station-zoom';
 const ZOOM_STEPS = [0.7, 0.85, 1, 1.15, 1.3, 1.5];
@@ -328,6 +329,7 @@ export function mountStationView(root) {
 
     const bodyClasses = ['print-active', 'print-cutlist-active', 'station-print-active'];
     bodyClasses.forEach((cls) => document.body.classList.add(cls));
+    setPrintPageStyle('opticut');
 
     let cleaned = false;
     const cleanup = () => {
@@ -335,6 +337,7 @@ export function mountStationView(root) {
       cleaned = true;
       bodyClasses.forEach((cls) => document.body.classList.remove(cls));
       printContainer.innerHTML = '';
+      clearPrintPageStyle();
     };
     window.addEventListener('afterprint', cleanup, { once: true });
     setTimeout(cleanup, 120_000);
